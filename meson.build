@@ -34,11 +34,11 @@ elif host_machine.system() == 'linux'
 endif
 
 inc_dir = include_directories(
-  'src',
+  'src'
 )
 
 sources = files(
-  'src/main.cpp',
+  'src/main.cpp', 'src/scene.cpp', 'src/object.cpp'
 )
 
 executable('signify',
@@ -48,5 +48,5 @@ executable('signify',
   dependencies: dependencies,
   include_directories: inc_dir,
   link_args: link_args,
-  name_suffix: name_suffix,
+  name_suffix: name_suffix
 )

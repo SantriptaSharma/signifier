@@ -8,6 +8,7 @@ A simple SDF scene editor, built on top of raylib.
 - Raymarcher for viewport rendering
 - SDF primitives
 - SDF operations
+- Domain warps
 - Tool UI
 - Scene loading & saving
 - More (will think as I go)
