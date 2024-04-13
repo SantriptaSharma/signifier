@@ -12,15 +12,13 @@ enum class ObjectType {
 	CYLINDER,
 };
 
-class Object {
-protected:
-	ObjectType m_type;
-	Matrix m_transform;
-	Color m_color;
+struct Object {
+	ObjectType type;
+	Matrix transform;
+	Color color;
 
-public:
-	Object(ObjectType type, Matrix transform, Color color): m_type(type), m_transform(transform), m_color(color) {};
-	Object(): m_type(ObjectType::SPHERE), m_transform(MatrixIdentity()), m_color(WHITE) {};
+	Object(ObjectType type, Matrix transform, Color color): type(type), transform(transform), color(color) {};
+	Object(): type(ObjectType::SPHERE), transform(MatrixIdentity()), color(WHITE) {};
 	~Object() {};
 };
 

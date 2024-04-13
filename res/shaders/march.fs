@@ -1,12 +1,11 @@
-#version 330
-
-#define MAX_OBJECTS 100
+#define MAX_OBJECTS 800
+#define MAX_DISTANCE 1000.0
 
 struct Object {
 	int type;
 	mat4 transform;
 	vec3 color;
-}
+};
 
 in vec2 fragTexCoord;
 in vec4 fragColor;
@@ -15,17 +14,9 @@ out vec4 finalColor;
 
 uniform vec3 viewEye;
 uniform vec3 viewCenter;
-uniform float runTime;
 uniform vec2 resolution;
 uniform Object objects[MAX_OBJECTS];
-
-vec2 castRay( in vec3 ro, in vec3 rd )
-{
-    float tmin = 0.2;
-    float tmax = 30.0;
-
-
-}
+uniform int objectCount;
 
 mat3 setCamera( in vec3 ro, in vec3 ta, float cr )
 {
@@ -35,6 +26,22 @@ mat3 setCamera( in vec3 ro, in vec3 ta, float cr )
     vec3 cv = normalize( cross(cu,cw) );
     return mat3( cu, cv, cw );
 }
+
+// float sdfSphere(in Object o, vec3 point) {
+		
+// }
+
+// float sdfScene(vec3 point) {
+// 	float minDistance = MAX_DISTANCE;
+
+// 	for (int i = 0; i < objectCount; i++) {
+// 		switch (objects[i].type) {
+// 			case 0: 
+
+// 			break;
+// 		}
+// 	}
+// }
 
 void main()
 {
@@ -49,10 +56,11 @@ void main()
 	// ray direction (baked assumption of focal plane distance)
 	vec3 rd = ca * normalize( vec3(p.xy,2.0) );
 
-	vec3 col = render( ro, rd );
+	// vec3 col = render( ro, rd );
+	vec3 col = vec3(1.0);
 
 	// gamma correct
 	col = pow( col, vec3(0.4545) );
 
-    finalColor = vec4(col, 1.0);
+    finalColor = vec4(p, 0.0, 1.0);
 }

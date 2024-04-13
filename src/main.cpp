@@ -3,6 +3,8 @@
 #include "object.h"
 #include "scene.h"
 
+#include <iostream>
+
 void frame(const Scene &s, const Shader &marcher) {
 }
 
@@ -14,7 +16,8 @@ std::unique_ptr<Scene> setupScene() {
     cam.fovy = 45.0f;
     cam.projection = CAMERA_PERSPECTIVE;
 
-    Shader marcher = LoadShader(0, "../res/shaders/marcher.fs");
+    std::cout << GetWorkingDirectory() << std::endl;
+    Shader marcher = LoadShader(0, "res/shaders/march.fs");
 
     std::unique_ptr<Scene> scene = std::make_unique<Scene>(SceneConfig{}, cam, marcher);
     scene->AddObject(MakeSphere(Vector3{0, 0, 0}, 1.0f, RED));
@@ -29,8 +32,6 @@ int main(int argc, const char **argv) {
 
     int screenWidth = GetScreenWidth();
     int screenHeight = GetScreenHeight();
-
-    float resolution[2] = { (float)screenWidth, (float)screenHeight };
 
     SetTargetFPS(60);
 

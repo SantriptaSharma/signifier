@@ -7,6 +7,8 @@
 
 #include "object.h"
 
+#define MAX_OBJECTS 800
+
 using string = std::string;
 
 struct SceneConfig {};
@@ -20,10 +22,11 @@ private:
 	uint32_t m_id;
 	std::vector<std::unique_ptr<Object>> m_objects;
 	Shader m_marcher;
-	std::map<string, ShaderLocationIndex> m_uniform_cache;
+	std::map<string, int> m_uniform_cache;
 	
 public:
-	Scene(SceneConfig config, Camera cam, Shader marcher): m_config(config), m_camera(cam), m_id(SCN_ID++), m_objects(), m_marcher(marcher), m_uniform_cache() {};
+	Scene(SceneConfig config, Camera cam, Shader marcher): m_config(config), m_camera(cam), m_id(SCN_ID++), m_objects(), m_marcher(marcher), m_uniform_cache() 
+		{ PopulateCache(); };
 	~Scene() {
 		UnloadShader(m_marcher);
 	};
