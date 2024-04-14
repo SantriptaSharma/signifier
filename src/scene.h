@@ -7,7 +7,7 @@
 
 #include "object.h"
 
-#define MAX_OBJECTS 800
+#define MAX_OBJECTS 128
 
 using string = std::string;
 

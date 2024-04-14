@@ -1,9 +1,16 @@
-#define MAX_OBJECTS 800
+#define MAX_OBJECTS 128
 #define MAX_DISTANCE 1000.0
+#define EPS 0.001
 
 struct Object {
 	int type;
 	mat4 transform;
+	vec3 size;
+	vec3 color;
+};
+
+struct Hit {
+	float dist;
 	vec3 color;
 };
 
@@ -27,21 +34,50 @@ mat3 setCamera( in vec3 ro, in vec3 ta, float cr )
     return mat3( cu, cv, cw );
 }
 
-// float sdfSphere(in Object o, vec3 point) {
-		
-// }
+Hit sdfSphere(in Object o, in vec3 point) {
+	vec3 p = (o.transform * vec4(point, 1.0)).xyz;
+	return Hit(length(p) - o.size.x, o.color);
+}
 
-// float sdfScene(vec3 point) {
-// 	float minDistance = MAX_DISTANCE;
+// simple min for now
+Hit hitUnion(Hit a, Hit b) {
+	return a.dist < b.dist ? a : b;
+}
 
-// 	for (int i = 0; i < objectCount; i++) {
-// 		switch (objects[i].type) {
-// 			case 0: 
+Hit sdfScene(in vec3 point) {
+	Hit minHit = Hit(MAX_DISTANCE, vec3(0.0));
 
-// 			break;
-// 		}
-// 	}
-// }
+	for (int i = 0; i < objectCount; i++) {
+		switch (objects[i].type) {
+			case 0: 
+				Hit hit = sdfSphere(objects[i], point);
+				minHit = hitUnion(minHit, hit);
+			break;
+		}
+	}
+
+	return minHit;
+}
+
+vec3 march(in vec3 ro, in vec3 rd) {
+	float t = 0.0;
+	int i;
+
+	for (i = 0; i < 256; i++) {
+		vec3 point = ro + rd * t;
+		Hit hit = sdfScene(point);
+		if (hit.dist < EPS) {
+			return hit.color;
+		}
+
+		t += hit.dist;
+		if (t > MAX_DISTANCE) {
+			break;
+		}
+	}
+	
+	return vec3(clamp(i / 64.0, 0.0, 1.0), 0.0, 0.0);
+}
 
 void main()
 {
@@ -62,5 +98,6 @@ void main()
 	// gamma correct
 	col = pow( col, vec3(0.4545) );
 
-    finalColor = vec4(p, 0.0, 1.0);
+
+	finalColor = vec4(march(ro, rd), 1.0);
 }

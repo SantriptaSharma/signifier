@@ -15,10 +15,11 @@ enum class ObjectType {
 struct Object {
 	ObjectType type;
 	Matrix transform;
+	Vector3 size;
 	Color color;
 
-	Object(ObjectType type, Matrix transform, Color color): type(type), transform(transform), color(color) {};
-	Object(): type(ObjectType::SPHERE), transform(MatrixIdentity()), color(WHITE) {};
+	Object(ObjectType type, Matrix transform, Vector3 size, Color color): type(type), transform(transform), size(size), color(color) {};
+	Object(): type(ObjectType::SPHERE), transform(MatrixIdentity()), size(Vector3One()), color(WHITE) {};
 	~Object() {};
 };
 

@@ -21,6 +21,7 @@ void Scene::PopulateCache() {
 		AddToCache(m_marcher, m_uniform_cache, TextFormat("objects[%d].type", i));
 		AddToCache(m_marcher, m_uniform_cache, TextFormat("objects[%d].transform", i));
 		AddToCache(m_marcher, m_uniform_cache, TextFormat("objects[%d].color", i));
+		AddToCache(m_marcher, m_uniform_cache, TextFormat("objects[%d].size", i));
 	}
 }
 
@@ -43,9 +44,11 @@ void Scene::Update() {
 
 	for (uint64_t i = 0; i < size; i++) {
 		float color[3] = {m_objects[i]->color.r, m_objects[i]->color.g, m_objects[i]->color.b};
+		float size[3] = {m_objects[i]->size.x, m_objects[i]->size.y, m_objects[i]->size.z};
 
 		SetShaderValue(m_marcher, m_uniform_cache.at(TextFormat("objects[%d].type", i)), &m_objects[i]->type, SHADER_UNIFORM_INT);
 		SetShaderValue(m_marcher, m_uniform_cache.at(TextFormat("objects[%d].color", i)), &color, SHADER_UNIFORM_VEC3);
 		SetShaderValueMatrix(m_marcher, m_uniform_cache.at(TextFormat("objects[%d].transform", i)), m_objects[i]->transform);
+		SetShaderValue(m_marcher, m_uniform_cache.at(TextFormat("objects[%d].size", i)), &size, SHADER_UNIFORM_VEC3);
 	}
 }
