@@ -1,13 +1,25 @@
 #define MAX_OBJECTS 128
+#define MAX_LIGHTS 8
 #define MAX_DISTANCE 1000.0
 #define MAX_ITERATIONS 512 
 #define EPS 0.001
+#define LIGHT_ZERO_POINT 0.01
+#define SHININESS 10
+#define SPEC_COLOR (vec3(1.0))
 
 struct Object {
 	int type;
+	int combineType;
 	mat4 invTransform;
 	vec3 size;
 	vec3 color;
+};
+
+struct Light {
+	vec3 position;
+	vec3 color;
+	int type;
+	float intensity;
 };
 
 struct Hit {
@@ -25,6 +37,8 @@ uniform vec3 viewCenter;
 uniform vec2 resolution;
 uniform Object objects[MAX_OBJECTS];
 uniform int objectCount;
+uniform Light lights[MAX_LIGHTS];
+uniform int lightCount;
 
 uniform vec3 clearColor;
 
@@ -83,6 +97,49 @@ Hit sdfScene(in vec3 point) {
 	return minHit;
 }
 
+vec3 estimateNormal(in vec3 point) {
+	vec3 eps = vec3(EPS/100, 0.0, 0.0);
+	vec3 normal = vec3(
+		sdfScene(point + eps.xyy).dist - sdfScene(point - eps.xyy).dist,
+		sdfScene(point + eps.yxy).dist - sdfScene(point - eps.yxy).dist,
+		sdfScene(point + eps.yyx).dist - sdfScene(point - eps.yyx).dist
+	);
+
+	return normalize(normal);
+}
+
+vec4 get_dir_intensity(in vec3 point, in vec3 normal, in Light light) {
+	vec3 diff = light.position - point;
+	vec3 lightDir = (light.type == 0) ? normalize(diff) : -light.position;
+	float dist = length(diff);
+	float intensity = (light.type == 0) ? (light.intensity)/(dist * dist) : light.intensity;
+
+	return vec4(lightDir, intensity);
+}
+
+vec3 lighting(in vec3 point, in vec3 normal, in vec3 color, in vec3 view) {
+	vec3 lightColor = vec3(LIGHT_ZERO_POINT) * color;
+	for (int i = 0; i < lightCount; i++) {
+		vec4 dir_intensity = get_dir_intensity(point, normal, lights[i]);
+		vec3 lightDir = dir_intensity.xyz;
+		float intensity = dir_intensity.w;
+
+		// TODO: allow control for 0-point (ambient scene color), and specular lighting parameters
+		float diff = max(dot(normal, lightDir), LIGHT_ZERO_POINT);
+		float specular = 0.0;
+
+		if (diff > 0.0) {
+			vec3 H = normalize(lightDir + view);
+			float spec = max(dot(H, normal), 0.0);
+			specular = pow(spec, SHININESS);
+		}
+
+		lightColor += lights[i].color * diff * intensity * color + SPEC_COLOR * specular * intensity * color;
+	}
+
+	return lightColor;
+}
+
 // TODO: add AA
 
 vec3 march(in vec3 ro, in vec3 rd) {
@@ -93,7 +150,8 @@ vec3 march(in vec3 ro, in vec3 rd) {
 		vec3 point = ro + rd * t;
 		Hit hit = sdfScene(point);
 		if (hit.dist < EPS) {
-			return hit.color;
+			vec3 normal = estimateNormal(point);
+			return lighting(point, normal, hit.color, -rd);
 		}
 
 		t += hit.dist;

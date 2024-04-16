@@ -8,6 +8,7 @@
 #include "object.h"
 
 #define MAX_OBJECTS 128
+#define MAX_LIGHTS 8
 
 using string = std::string;
 
@@ -20,7 +21,8 @@ private:
 	SceneConfig m_config;
 	Camera m_camera;
 	uint32_t m_id;
-	std::vector<std::unique_ptr<Object>> m_objects;
+	std::vector<std::shared_ptr<Object>> m_objects;
+	std::vector<std::shared_ptr<Light>> m_lights;
 	Shader m_marcher;
 	std::map<string, int> m_uniform_cache;
 	Color m_clear_color;
@@ -32,7 +34,8 @@ public:
 		UnloadShader(m_marcher);
 	};
 
-	void AddObject(std::unique_ptr<Object> object);
+	std::shared_ptr<Object> AddObject(std::shared_ptr<Object> object);
+	std::shared_ptr<Light> AddLight(std::shared_ptr<Light> light);
 	void SetClearColor(Color clear) { m_clear_color = clear; };
 	void PopulateCache();
 	void Render() const;

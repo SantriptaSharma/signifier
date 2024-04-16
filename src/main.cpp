@@ -17,10 +17,12 @@ std::unique_ptr<Scene> setupScene() {
     Shader marcher = LoadShader(0, "res/shaders/march.fs");
 
     std::unique_ptr<Scene> scene = std::make_unique<Scene>(SceneConfig{}, cam, marcher);
-    scene->AddObject(MakeSphere(Vector3{0, 0, 0}, 1.5f, RED));
-    scene->AddObject(MakeSphere(Vector3{1.5f, 0, 0}, 1.0f, BLUE));
-    scene->AddObject(MakeSphere(Vector3{-5, 0, 3}, 1.0f, YELLOW));
-    scene->AddObject(MakeInfPlane(-3, MatrixRotateZ(PI/48), GREEN));
+    scene->AddObject(Object::MakeSphere(Vector3{0, 0, 0}, 1.5f, RED));
+    scene->AddObject(Object::MakeSphere(Vector3{1.5f, 0, 0}, 1.0f, BLUE));
+    scene->AddObject(Object::MakeSphere(Vector3{-5, 0, 3}, 1.0f, YELLOW));
+    scene->AddObject(Object::MakeInfPlane(-3, MatrixIdentity(), GREEN));
+    scene->AddLight(MakeDirectionalLight(Vector3{0.5, -1, -0.8}, WHITE, 0.5f));
+    scene->AddLight(MakePointLight(Vector3{3, 3, 0}, PURPLE, 15.0f));
     scene->SetClearColor(SKYBLUE);
     return scene;
 }

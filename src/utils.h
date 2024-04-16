@@ -1,1 +1,1 @@
-#define COLOR2FLOAT3(c) {(c).r / 255.0, (c).g / 255.0, (c).b / 255.0}
+#define COLOR2FLOAT3(c) { (c).r / 255.0f, (c).g / 255.0f, (c).b / 255.0f}
