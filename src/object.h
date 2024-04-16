@@ -24,3 +24,4 @@ struct Object {
 };
 
 std::unique_ptr<Object> MakeSphere(Vector3 pos, float radius, Color color);
+std::unique_ptr<Object> MakeInfPlane(float y, Matrix rotation, Color color);

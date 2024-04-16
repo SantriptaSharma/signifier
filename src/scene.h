@@ -23,17 +23,18 @@ private:
 	std::vector<std::unique_ptr<Object>> m_objects;
 	Shader m_marcher;
 	std::map<string, int> m_uniform_cache;
+	Color m_clear_color;
 	
 public:
 	Scene(SceneConfig config, Camera cam, Shader marcher): m_config(config), m_camera(cam), m_id(SCN_ID++), m_objects(), m_marcher(marcher), m_uniform_cache() 
-		{ PopulateCache(); };
+		{ PopulateCache(); m_clear_color = BLACK;};
 	~Scene() {
 		UnloadShader(m_marcher);
 	};
 
 	void AddObject(std::unique_ptr<Object> object);
+	void SetClearColor(Color clear) { m_clear_color = clear; };
 	void PopulateCache();
 	void Render() const;
 	void Update();
-
 };

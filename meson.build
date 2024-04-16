@@ -16,7 +16,6 @@ raylib_opts.set_install(false)
 raylib_opts.add_cmake_defines({
   'BUILD_EXAMPLES': 'OFF',
   'PLATFORM': 'Desktop'
-  # TODO: Add other CMake options for Raylib, if needed
 })
 
 raylib_subproject = cmake.subproject('raylib', options: raylib_opts)
