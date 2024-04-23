@@ -2,10 +2,16 @@
 #define MAX_LIGHTS 8
 #define MAX_DISTANCE 1000.0
 #define MAX_ITERATIONS 512 
+#define MAX_SHAD_ITERATIONS 128
+#define MAX_SHAD_DISTANCE 100.0
 #define EPS 0.001
+#define SHAD_EPS 0.1
+#define NORMAL_EPS 0.0001
 #define LIGHT_ZERO_POINT 0.01
 #define SHININESS 10
 #define SPEC_COLOR (vec3(1.0))
+
+#define AA_ROUNDS 3
 
 struct Object {
 	int type;
@@ -44,11 +50,11 @@ uniform vec3 clearColor;
 
 mat3 setCamera( in vec3 ro, in vec3 ta, float cr )
 {
-    vec3 cw = normalize(ta-ro);
-    vec3 cp = vec3(sin(cr), cos(cr),0.0);
-    vec3 cu = normalize( cross(cw,cp) );
-    vec3 cv = normalize( cross(cu,cw) );
-    return mat3( cu, cv, cw );
+	vec3 cw = normalize(ta-ro);
+	vec3 cp = vec3(sin(cr), cos(cr),0.0);
+	vec3 cu = normalize( cross(cw,cp) );
+	vec3 cv = normalize( cross(cu,cw) );
+	return mat3( cu, cv, cw );
 }
 
 Hit sdfSphere(in Object o, in vec3 point) {
@@ -61,14 +67,21 @@ Hit sdfInfPlane(in Object o, in vec3 point) {
 	return Hit(abs(p.y), o.color);
 }
 
+// Hit sdfBox(in Object o, in vec3 point) {
+// 	vec3 p = (o.invTransform * vec4(point, 1.0)).xyz;
+// 	vec3 q = abs(p) - o.size;
+
+// 	float dist = 
+// }
+
 // polynomial smooth minimum with exposed blending factor from https://iquilezles.org/articles/smin/
 vec2 smin( float a, float b, float k )
 {
-    float h = 1.0 - min( abs(a-b)/(4.0*k), 1.0 );
-    float w = h*h;
-    float m = w*0.5;
-    float s = w*k;
-    return (a<b) ? vec2(a-s,m) : vec2(b-s,1.0-m);
+	float h = 1.0 - min( abs(a-b)/(4.0*k), 1.0 );
+	float w = h*h;
+	float m = w*0.5;
+	float s = w*k;
+	return (a<b) ? vec2(a-s,m) : vec2(b-s,1.0-m);
 }
 
 Hit hitUnion(Hit a, Hit b) {
@@ -98,7 +111,7 @@ Hit sdfScene(in vec3 point) {
 }
 
 vec3 estimateNormal(in vec3 point) {
-	vec3 eps = vec3(EPS/100, 0.0, 0.0);
+	vec3 eps = vec3(NORMAL_EPS, 0.0, 0.0);
 	vec3 normal = vec3(
 		sdfScene(point + eps.xyy).dist - sdfScene(point - eps.xyy).dist,
 		sdfScene(point + eps.yxy).dist - sdfScene(point - eps.yxy).dist,
@@ -117,12 +130,30 @@ vec4 get_dir_intensity(in vec3 point, in vec3 normal, in Light light) {
 	return vec4(lightDir, intensity);
 }
 
+float soft_shadow(in vec3 ro, in vec3 rd, float k) {
+	float res = 1.0;
+	float t = SHAD_EPS;
+
+	for(int i=0; i < MAX_SHAD_ITERATIONS && t < MAX_SHAD_DISTANCE; i++)
+	{
+		float h = sdfScene(ro + rd * t).dist;
+		if(h < EPS)
+			return 0.0;
+		res = min(res, k * h / t);
+		t += h;
+	}
+
+	return res;
+}
+
 vec3 lighting(in vec3 point, in vec3 normal, in vec3 color, in vec3 view) {
 	vec3 lightColor = vec3(LIGHT_ZERO_POINT) * color;
 	for (int i = 0; i < lightCount; i++) {
 		vec4 dir_intensity = get_dir_intensity(point, normal, lights[i]);
 		vec3 lightDir = dir_intensity.xyz;
 		float intensity = dir_intensity.w;
+
+		float shad = soft_shadow(point, lightDir, 16.0);
 
 		// TODO: allow control for 0-point (ambient scene color), and specular lighting parameters
 		float diff = max(dot(normal, lightDir), LIGHT_ZERO_POINT);
@@ -134,7 +165,7 @@ vec3 lighting(in vec3 point, in vec3 normal, in vec3 color, in vec3 view) {
 			specular = pow(spec, SHININESS);
 		}
 
-		lightColor += lights[i].color * diff * intensity * color + SPEC_COLOR * specular * intensity * color;
+		lightColor += (lights[i].color * diff * intensity * color + SPEC_COLOR * specular * intensity * color) * shad;
 	}
 
 	return lightColor;
@@ -159,13 +190,11 @@ vec3 march(in vec3 ro, in vec3 rd) {
 			break;
 		}
 	}
-	
-	return clearColor;
 }
 
 void main()
 {
-    vec3 tot = vec3(0.0);
+	vec3 tot = vec3(0.0);
 	vec2 p = (-resolution.xy + 2.0*gl_FragCoord.xy)/resolution.y;
 	
 	vec3 ro = viewEye;
