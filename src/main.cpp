@@ -20,9 +20,26 @@ std::unique_ptr<Scene> setupScene() {
 
     std::unique_ptr<Scene> scene = std::make_unique<Scene>(SceneConfig{}, cam, marcher);
     scene->AddObject(Object::MakeSphere(Vector3{0, 0, 0}, 1.5f, RED));
-    rotatingSphere = scene->AddObject(Object::MakeSphere(Vector3{1.5f, 0, 0}, 1.0f, BLUE));
-    rotatingSphere->combineType = CombineType::SUBTRACT;
     scene->AddObject(Object::MakeSphere(Vector3{-5, 0, 3}, 1.0f, YELLOW));
+    
+    auto box = scene->AddObject(Object::MakeBox(Vector3{-5, 0, 3}, Vector3{2.0f, 0.5f, 0.5f}, GREEN));
+    box->combineType = CombineType::SUBTRACT;
+    box->transform = MatrixMultiply(MatrixRotateXYZ(Vector3{-PI/4, PI/4, -PI/4}), box->transform);
+
+    auto cylinder = scene->AddObject(Object::MakeCylinder(Vector3{3, 0, 0}, 1.0f, 2.0f, PURPLE));
+    cylinder->transform = MatrixMultiply(MatrixRotateXYZ(Vector3{0, 0, PI/2}), cylinder->transform);
+
+    auto cap = scene->AddObject(Object::MakeCylinder(Vector3{-0.5, 0, 0}, 0.8f, 1.5f, PURPLE));
+    cap->Rotate(MatrixRotateZ(PI/2));
+    cap->combineType = CombineType::SUBTRACT;
+
+    auto capInner = scene->AddObject(Object::MakeCylinder(Vector3{-0.3, 0, 0}, 0.6f, 2, PURPLE));
+    capInner->Rotate(MatrixRotateZ(PI/2));
+    capInner->combineType = CombineType::SUBTRACT;
+
+    rotatingSphere = scene->AddObject(Object::MakeSphere(Vector3{1.5f, 0, 0}, 1.0f, YELLOW));
+    rotatingSphere->combineType = CombineType::SUBTRACT;
+
     scene->AddObject(Object::MakeInfPlane(-3, MatrixIdentity(), GREEN));
     scene->AddLight(MakeDirectionalLight(Vector3{0.5, -1, -0.8}, WHITE, 0.5f));
     scene->SetClearColor(SKYBLUE);

@@ -48,13 +48,13 @@ uniform int lightCount;
 
 uniform vec3 clearColor;
 
-mat3 setCamera( in vec3 ro, in vec3 ta, float cr )
+mat3 setCamera(in vec3 ro, in vec3 ta, float cr)
 {
-	vec3 cw = normalize(ta-ro);
+	vec3 cw = normalize(ta - ro);
 	vec3 cp = vec3(sin(cr), cos(cr),0.0);
-	vec3 cu = normalize( cross(cw,cp) );
-	vec3 cv = normalize( cross(cu,cw) );
-	return mat3( cu, cv, cw );
+	vec3 cu = normalize(cross(cw, cp));
+	vec3 cv = normalize(cross(cu, cw));
+	return mat3(cu, cv, cw);
 }
 
 Hit sdfSphere(in Object o, in vec3 point) {
@@ -62,17 +62,27 @@ Hit sdfSphere(in Object o, in vec3 point) {
 	return Hit(length(p) - o.size.x, o.color);
 }
 
+Hit sdfBox(in Object o, in vec3 point)
+{
+	vec3 p = (o.invTransform * vec4(point, 1.0)).xyz;
+	vec3 q = abs(p) - o.size;
+
+	return Hit(length(max(q, 0.0)) + min(max(q.x, max(q.y, q.z)), 0.0), o.color);
+}
+
+Hit sdfCylinder(in Object o, in vec3 point)
+{
+	vec3 p = (o.invTransform * vec4(point, 1.0)).xyz;
+
+	vec2 d = abs(vec2(length(p.xz),p.y)) - vec2(o.size.x, o.size.y);
+	return Hit(min(max(d.x,d.y),0.0) + length(max(d,0.0)), o.color);
+}
+
+
 Hit sdfInfPlane(in Object o, in vec3 point) {
 	vec3 p = (o.invTransform * vec4(point, 1.0)).xyz;
 	return Hit(abs(p.y) - EPS * 10, o.color);
 }
-
-// Hit sdfBox(in Object o, in vec3 point) {
-// 	vec3 p = (o.invTransform * vec4(point, 1.0)).xyz;
-// 	vec3 q = abs(p) - o.size;
-
-// 	float dist = 
-// }
 
 // polynomial smooth minimum with exposed blending factor from https://iquilezles.org/articles/smin/
 vec2 smin( float a, float b, float k )
@@ -130,17 +140,31 @@ Hit sdfScene(in vec3 point) {
 	Hit minHit = Hit(MAX_DISTANCE, vec3(0.0));
 
 	for (int i = 0; i < objectCount; i++) {
+		Hit hit;
+
 		switch (objects[i].type) {
 			case 0: 
-				Hit hit = sdfSphere(objects[i], point);
-				minHit = hitJoin(minHit, hit, objects[i].combineType);
+				hit = sdfSphere(objects[i], point);
 			break;
 
 			case 1:
-				hit = objects[i].size.x == 0.0 ? sdfInfPlane(objects[i], point) : sdfInfPlane(objects[i], point);
-				minHit = hitJoin(minHit, hit, objects[i].combineType);
+				hit = sdfInfPlane(objects[i], point);
+			break;
+
+			case 2:
+				hit = sdfBox(objects[i], point);
+			break;
+
+			case 3:
+				hit = sdfCylinder(objects[i], point);
+			break;
+
+			default:
+				hit = sdfSphere(objects[i], point);
 			break;
 		}
+
+		minHit = hitJoin(minHit, hit, objects[i].combineType);
 	}
 
 	return minHit;

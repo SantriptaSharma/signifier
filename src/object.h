@@ -7,9 +7,9 @@
 enum class ObjectType {
 	SPHERE,
 	PLANE,
-	CUBE,
-	CONE,
-	CYLINDER
+	BOX,
+	CYLINDER,
+	CONE
 };
 
 enum class CombineType {
@@ -32,8 +32,14 @@ struct Object {
 	Object(): 	type(ObjectType::SPHERE), combineType(CombineType::SOFTUNION), transform(MatrixIdentity()), size(Vector3One()), color(WHITE) {};
 	~Object() {};
 
+	void Rotate(Matrix rotation) {
+		transform = MatrixMultiply(rotation, transform);
+	}
+
 	static std::shared_ptr<Object> MakeSphere(Vector3 pos, float radius, Color color);
 	static std::shared_ptr<Object> MakeInfPlane(float y, Matrix rotation, Color color);
+	static std::shared_ptr<Object> MakeBox(Vector3 pos, Vector3 size, Color color);
+	static std::shared_ptr<Object> MakeCylinder(Vector3 pos, float radius, float height, Color color);
 };
 
 enum class LightType {
