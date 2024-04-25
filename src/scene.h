@@ -38,6 +38,8 @@ public:
 	std::shared_ptr<Light> AddLight(std::shared_ptr<Light> light);
 	void SetClearColor(Color clear) { m_clear_color = clear; };
 	void PopulateCache();
-	void Render() const;
+	void Render();
+
+private:
 	void Update();
 };

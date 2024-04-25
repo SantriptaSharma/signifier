@@ -64,7 +64,7 @@ Hit sdfSphere(in Object o, in vec3 point) {
 
 Hit sdfInfPlane(in Object o, in vec3 point) {
 	vec3 p = (o.invTransform * vec4(point, 1.0)).xyz;
-	return Hit(abs(p.y), o.color);
+	return Hit(abs(p.y) - EPS * 10, o.color);
 }
 
 // Hit sdfBox(in Object o, in vec3 point) {
@@ -84,10 +84,46 @@ vec2 smin( float a, float b, float k )
 	return (a<b) ? vec2(a-s,m) : vec2(b-s,1.0-m);
 }
 
-Hit hitUnion(Hit a, Hit b) {
+Hit hitSUnion(Hit a, Hit b) {
 	vec2 res = smin(a.dist, b.dist, 0.3);
 
 	return Hit(res.x, mix(a.color, b.color, res.y));
+}
+
+Hit hitUnion(Hit a, Hit b) {
+	return a.dist < b.dist ? a : b;
+}
+
+Hit hitIntersection(Hit a, Hit b) {
+	return a.dist > b.dist ? a : b;
+}
+
+Hit hitDifference(Hit a, Hit b) {
+	return Hit(max(a.dist, -b.dist), a.color);
+}
+
+Hit hitJoin(Hit a, Hit b, int combineType) {
+	switch (combineType) {
+		case 0:
+			return hitUnion(a, b);
+		break;
+
+		case 1:
+			return hitSUnion(a, b);
+		break;
+
+		case 2:
+			return hitDifference(a, b);
+		break;
+
+		case 3:
+			return hitIntersection(a, b);
+		break;
+
+		default:
+			return hitUnion(a, b);
+		break;
+	}
 }
 
 Hit sdfScene(in vec3 point) {
@@ -97,12 +133,12 @@ Hit sdfScene(in vec3 point) {
 		switch (objects[i].type) {
 			case 0: 
 				Hit hit = sdfSphere(objects[i], point);
-				minHit = hitUnion(minHit, hit);
+				minHit = hitJoin(minHit, hit, objects[i].combineType);
 			break;
 
 			case 1:
 				hit = objects[i].size.x == 0.0 ? sdfInfPlane(objects[i], point) : sdfInfPlane(objects[i], point);
-				minHit = hitUnion(minHit, hit);
+				minHit = hitJoin(minHit, hit, objects[i].combineType);
 			break;
 		}
 	}

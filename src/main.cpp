@@ -5,6 +5,8 @@
 
 #include <iostream>
 
+static std::shared_ptr<Object> rotatingSphere = nullptr;
+
 std::unique_ptr<Scene> setupScene() {
     Camera cam = {0};
     cam.position = Vector3{0, 0, 10};
@@ -18,11 +20,11 @@ std::unique_ptr<Scene> setupScene() {
 
     std::unique_ptr<Scene> scene = std::make_unique<Scene>(SceneConfig{}, cam, marcher);
     scene->AddObject(Object::MakeSphere(Vector3{0, 0, 0}, 1.5f, RED));
-    scene->AddObject(Object::MakeSphere(Vector3{1.5f, 0, 0}, 1.0f, BLUE));
+    rotatingSphere = scene->AddObject(Object::MakeSphere(Vector3{1.5f, 0, 0}, 1.0f, BLUE));
+    rotatingSphere->combineType = CombineType::SUBTRACT;
     scene->AddObject(Object::MakeSphere(Vector3{-5, 0, 3}, 1.0f, YELLOW));
     scene->AddObject(Object::MakeInfPlane(-3, MatrixIdentity(), GREEN));
     scene->AddLight(MakeDirectionalLight(Vector3{0.5, -1, -0.8}, WHITE, 0.5f));
-    scene->AddLight(MakePointLight(Vector3{3, 3, 0}, PURPLE, 15.0f));
     scene->SetClearColor(SKYBLUE);
     return scene;
 }
@@ -37,7 +39,12 @@ int main(int argc, const char **argv) {
     std::unique_ptr<Scene> s = setupScene();
 
     while(!WindowShouldClose()) {
-        s->Update();
+        float t = GetTime();
+
+        float r = 1.8f + sin(t) * 0.6;
+        float u = r * cos(t);
+        float v = r * sin(t);
+        rotatingSphere->transform = MatrixTranslate(u, 0, v);
 
         BeginDrawing();
         ClearBackground(RAYWHITE);

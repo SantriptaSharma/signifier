@@ -52,7 +52,9 @@ void Scene::PopulateCache() {
 	}
 }
 
-void Scene::Render() const {
+void Scene::Render() {
+	this->Update();
+
 	BeginShaderMode(m_marcher);
 		DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), RAYWHITE);
 	EndShaderMode();
@@ -73,13 +75,6 @@ void Scene::Update() {
 
 	float clear[3] = COLOR2FLOAT3(m_clear_color);
 	SetShaderValue(m_marcher, m_uniform_cache.at("clearColor"), &clear, SHADER_UNIFORM_VEC3);
-
-	// Object Update Time (hardcoded for demoscene for now)
-	float r = 1.8f + sin(GetTime()) * 0.6;
-	float u = r * cos(GetTime());
-	float v = r * sin(GetTime());
-	m_objects[1]->transform = MatrixTranslate(u, 0, v);
-
 
 	for (uint64_t i = 0; i < obj_size; i++) {
 		float color[3] = COLOR2FLOAT3(m_objects[i]->color);
