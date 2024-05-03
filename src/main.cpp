@@ -33,9 +33,14 @@ std::unique_ptr<Scene> setupScene() {
     rotatingSphere = scene->AddObject(Object::MakeSphere(Vector3{1.5f, 0, 0}, 1.0f, YELLOW));
     rotatingSphere->combineType = CombineType::SUBTRACT;
 
-    box = Object::MakeBox(Vector3{0, -3, 0}, Vector3{10, 0.5, 10}, BROWN);
+    box = Object::MakeBox(Vector3{0, -3, 0}, Vector3{10, 0.2, 10}, BROWN);
     box->combineType = CombineType::UNION;
     scene->AddObject(box);
+
+    int layer = scene->CreateLayer("BigFloor");
+    box = Object::MakeBox(Vector3{0, -8, 0}, Vector3{30, 0.2, 30}, GREEN);
+    scene->AddObject(box, layer);
+
     scene->AddLight(MakeDirectionalLight(Vector3{0.5, -1, -0.8}, WHITE, 0.5f));
     scene->SetClearColor(SKYBLUE);
     return scene;

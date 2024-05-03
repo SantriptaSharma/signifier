@@ -48,6 +48,8 @@ uniform int lightCount;
 
 uniform vec3 clearColor;
 
+uniform sampler2D depth;
+
 mat3 setCamera(in vec3 ro, in vec3 ta, float cr)
 {
 	vec3 cw = normalize(ta - ro);
@@ -233,7 +235,7 @@ vec3 lighting(in vec3 point, in vec3 normal, in vec3 color, in vec3 view) {
 
 // TODO: add AA
 
-vec3 march(in vec3 ro, in vec3 rd) {
+vec4 march(in vec3 ro, in vec3 rd) {
 	float t = 0.0;
 	int i;
 
@@ -242,7 +244,7 @@ vec3 march(in vec3 ro, in vec3 rd) {
 		Hit hit = sdfScene(point);
 		if (hit.dist < EPS) {
 			vec3 normal = estimateNormal(point);
-			return lighting(point, normal, hit.color, -rd);
+			return vec4(lighting(point, normal, hit.color, -rd), 1.0);
 		}
 
 		t += hit.dist;
@@ -251,7 +253,7 @@ vec3 march(in vec3 ro, in vec3 rd) {
 		}
 	}
 
-	return clearColor;
+	return vec4(clearColor, 0.0);
 }
 
 void main()
@@ -267,9 +269,9 @@ void main()
 	// ray direction
 	vec3 rd = ca * normalize( vec3(p.xy, 2) );
 
-	vec3 col = march(ro, rd);
+	vec4 col = march(ro, rd);
 	// gamma correct
-	col = pow( col, vec3(0.4545));
+	col = pow(col, vec4(0.4545, 0.4545, 0.4545, 1.0));
 
-	finalColor = vec4(col, 1.0);
+	finalColor = col;
 }

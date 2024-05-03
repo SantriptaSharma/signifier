@@ -6,12 +6,13 @@
 
 int Scene::SCN_ID = 0;
 
-std::shared_ptr<Object> Scene::AddObject(std::shared_ptr<Object> object) {
-	if (m_objects.size() >= MAX_OBJECTS) {
+std::shared_ptr<Object> Scene::AddObject(std::shared_ptr<Object> object, uint64_t layerIndex) {
+	Layer &l = m_layers[layerIndex];
+	if (l.objects.size() >= MAX_OBJECTS) {
 		throw std::runtime_error(TextFormat("Maximum number of objects (%d) reached", MAX_OBJECTS));
 		return object;
 	}
-	m_objects.push_back(object);
+	l.objects.push_back(object);
 	return object;
 }
 
@@ -22,6 +23,13 @@ std::shared_ptr<Light> Scene::AddLight(std::shared_ptr<Light> light) {
 	}
 	m_lights.push_back(light);
 	return light;
+}
+
+int Scene::CreateLayer(string name) {
+	Layer l;
+	l.name = name;
+	m_layers.push_back(l);
+	return m_layers.size() - 1;
 }
 
 static void AddToCache(Shader &shad, std::map<string, int> &cache, const string &name) {
@@ -53,11 +61,19 @@ void Scene::PopulateCache() {
 }
 
 void Scene::Render() {
-	this->Update();
+	ViewportCameraControls();
 
-	BeginShaderMode(m_marcher);
+	uint64_t layers = m_layers.size();
+
+	for (uint64_t i = 0; i < layers; i++) {
+		this->LoadLayerUniforms(i);
+
+		// TODO: carry a depth buffer for each layer for z-testing
+		
+		BeginShaderMode(m_marcher);
 		DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), RAYWHITE);
-	EndShaderMode();
+		EndShaderMode();
+	}
 }
 
 // Manages the movement of the camera in the viewport
@@ -96,11 +112,12 @@ void Scene::ViewportCameraControls() {
 	m_camera.position.z = -m_r * cos(m_theta) * cos(m_phi) + m_camera.target.z;
 }
 
-void Scene::Update() {
-	ViewportCameraControls();
-
+void Scene::LoadLayerUniforms(uint64_t layerIndex) {
 	float res[2] = {(float)GetScreenWidth(), (float)GetScreenHeight()};
-	uint64_t obj_size = m_objects.size();
+
+	Layer &l = m_layers[layerIndex];
+
+	uint64_t obj_size = l.objects.size();
 	uint64_t light_size = m_lights.size();
 
 	SetShaderValue(m_marcher, m_uniform_cache.at("resolution"), &res, SHADER_UNIFORM_VEC2);
@@ -113,13 +130,13 @@ void Scene::Update() {
 	SetShaderValue(m_marcher, m_uniform_cache.at("clearColor"), &clear, SHADER_UNIFORM_VEC3);
 
 	for (uint64_t i = 0; i < obj_size; i++) {
-		float color[3] = COLOR2FLOAT3(m_objects[i]->color);
-		float size[3] = {m_objects[i]->size.x, m_objects[i]->size.y, m_objects[i]->size.z};
+		float color[3] = COLOR2FLOAT3(l.objects[i]->color);
+		float size[3] = {l.objects[i]->size.x, l.objects[i]->size.y, l.objects[i]->size.z};
 
-		SetShaderValue(m_marcher, m_uniform_cache.at(TextFormat("objects[%d].type", i)), &m_objects[i]->type, SHADER_UNIFORM_INT);
-		SetShaderValue(m_marcher, m_uniform_cache.at(TextFormat("objects[%d].combineType", i)), &m_objects[i]->combineType, SHADER_UNIFORM_INT);
+		SetShaderValue(m_marcher, m_uniform_cache.at(TextFormat("objects[%d].type", i)), &l.objects[i]->type, SHADER_UNIFORM_INT);
+		SetShaderValue(m_marcher, m_uniform_cache.at(TextFormat("objects[%d].combineType", i)), &l.objects[i]->combineType, SHADER_UNIFORM_INT);
 		SetShaderValue(m_marcher, m_uniform_cache.at(TextFormat("objects[%d].color", i)), &color, SHADER_UNIFORM_VEC3);
-		SetShaderValueMatrix(m_marcher, m_uniform_cache.at(TextFormat("objects[%d].invTransform", i)), MatrixInvert(m_objects[i]->transform));
+		SetShaderValueMatrix(m_marcher, m_uniform_cache.at(TextFormat("objects[%d].invTransform", i)), MatrixInvert(l.objects[i]->transform));
 		SetShaderValue(m_marcher, m_uniform_cache.at(TextFormat("objects[%d].size", i)), &size, SHADER_UNIFORM_VEC3);
 	}
 
