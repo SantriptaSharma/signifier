@@ -99,7 +99,7 @@ void Scene::ViewportCameraControls() {
 	Vector3 fwd = Vector3Normalize(Vector3Subtract(m_camera.target, m_camera.position));
 	// right handed system
 	Vector3 right = Vector3Normalize(Vector3CrossProduct(fwd, m_camera.up));
-	Vector3 up = m_camera.up;
+	Vector3 up = Vector3Normalize(Vector3CrossProduct(right, fwd));
 
 	Vector2 mmove = GetMouseDelta();
 	float dt = GetFrameTime();

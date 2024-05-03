@@ -243,7 +243,7 @@ vec4 march(in vec3 ro, in vec3 rd) {
 		if (hit.dist < EPS) {
 			vec3 normal = estimateNormal(point);
 			
-			float depth = clamp(t - EPS, EPS, MAX_DISTANCE);
+			float depth = clamp(t, 0.0, MAX_DISTANCE);
 			depth = clamp((1/depth - 1) / (1/MAX_DISTANCE - 1), 0.0, 1 - EPS);
 
 			return vec4(lighting(point, normal, hit.color, -rd), depth);
