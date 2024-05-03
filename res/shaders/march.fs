@@ -46,8 +46,6 @@ uniform int objectCount;
 uniform Light lights[MAX_LIGHTS];
 uniform int lightCount;
 
-uniform vec3 clearColor;
-
 uniform sampler2D depth;
 
 mat3 setCamera(in vec3 ro, in vec3 ta, float cr)
@@ -139,7 +137,7 @@ Hit hitJoin(Hit a, Hit b, int combineType) {
 }
 
 Hit sdfScene(in vec3 point) {
-	Hit minHit = Hit(MAX_DISTANCE, clearColor);
+	Hit minHit = Hit(MAX_DISTANCE, vec3(0));
 
 	for (int i = 0; i < objectCount; i++) {
 		Hit hit;
@@ -236,7 +234,7 @@ vec3 lighting(in vec3 point, in vec3 normal, in vec3 color, in vec3 view) {
 // TODO: add AA
 
 vec4 march(in vec3 ro, in vec3 rd) {
-	float t = 0.0;
+	float t = EPS;
 	int i;
 
 	for (i = 0; i < MAX_ITERATIONS; i++) {
@@ -244,7 +242,11 @@ vec4 march(in vec3 ro, in vec3 rd) {
 		Hit hit = sdfScene(point);
 		if (hit.dist < EPS) {
 			vec3 normal = estimateNormal(point);
-			return vec4(lighting(point, normal, hit.color, -rd), 1.0);
+			
+			float depth = clamp(t - EPS, EPS, MAX_DISTANCE);
+			depth = clamp((1/depth - 1) / (1/MAX_DISTANCE - 1), 0.0, 1 - EPS);
+
+			return vec4(lighting(point, normal, hit.color, -rd), depth);
 		}
 
 		t += hit.dist;
@@ -253,7 +255,7 @@ vec4 march(in vec3 ro, in vec3 rd) {
 		}
 	}
 
-	return vec4(clearColor, 0.0);
+	return vec4(0.0, 0.0, 0.0, 1.0);
 }
 
 void main()
@@ -270,8 +272,13 @@ void main()
 	vec3 rd = ca * normalize( vec3(p.xy, 2) );
 
 	vec4 col = march(ro, rd);
+
 	// gamma correct
 	col = pow(col, vec4(0.4545, 0.4545, 0.4545, 1.0));
 
+	vec4 pix = texelFetch(depth, ivec2(gl_FragCoord.xy), 0);
+	
+	if (pix.a < col.a) discard;
+	
 	finalColor = col;
 }

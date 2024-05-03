@@ -1,4 +1,5 @@
 #include "raylib.h"
+#include "rlgl.h"
 
 #include "object.h"
 #include "scene.h"
@@ -10,8 +11,9 @@ static std::shared_ptr<Object> rotatingSphere = nullptr;
 std::unique_ptr<Scene> setupScene() {
     std::cout << GetWorkingDirectory() << std::endl;
     Shader marcher = LoadShader(0, "res/shaders/march.fs");
+    Shader composer = LoadShader(0, "res/shaders/composer.fs");
 
-    std::unique_ptr<Scene> scene = std::make_unique<Scene>(SceneConfig{}, marcher);
+    std::unique_ptr<Scene> scene = std::make_unique<Scene>(SceneConfig{}, marcher, composer);
     scene->AddObject(Object::MakeSphere(Vector3{0, 0, 0}, 1.5f, RED));
     scene->AddObject(Object::MakeSphere(Vector3{-5, 0, 3}, 1.0f, YELLOW));
     
@@ -53,11 +55,18 @@ int main(int argc, const char **argv) {
 
     SetTargetFPS(30);
 
-
     std::unique_ptr<Scene> s = setupScene();
+
+    rlEnableDepthMask();
+    rlEnableDepthTest();
 
     while(!WindowShouldClose()) {
         float delta = GetFrameTime();
+
+        if (IsWindowResized()) {
+            s->WindowResized();
+        }
+
         BeginDrawing();
         ClearBackground(RAYWHITE);
         s->Render();

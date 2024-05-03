@@ -33,25 +33,30 @@ private:
 	uint32_t m_id;
 	std::vector<Layer> m_layers;
 	std::vector<std::shared_ptr<Light>> m_lights;
-	Shader m_marcher;
+	Shader m_marcher, m_composer;
 	std::map<string, int> m_uniform_cache;
 	Color m_clear_color;
+
+	RenderTexture2D m_render_texture;
 	
 public:
-	Scene(SceneConfig config, Shader marcher): m_config(config), m_camera(), m_r(5), m_theta(PI/2), m_phi(0), m_id(SCN_ID++), m_layers(1), 
-	m_marcher(marcher), m_uniform_cache() { 
+	Scene(SceneConfig config, Shader marcher, Shader composer): m_config(config), m_camera(), m_r(5), m_theta(PI/2), m_phi(0), m_id(SCN_ID++), m_layers(1), 
+	m_marcher(marcher), m_composer(composer), m_uniform_cache() { 
 		m_camera = {0};
     	m_camera.position = Vector3{0, 0, m_r};
     	m_camera.target = Vector3{0, 0, 0};
     	m_camera.up = Vector3{0, 1, 0};
     	m_camera.projection = CAMERA_PERSPECTIVE;; 
 		
+		m_render_texture = LoadRenderTexture(GetScreenWidth(), GetScreenHeight());
+
 		PopulateCache();
 		m_clear_color = BLACK;
 	};
 
 	~Scene() {
 		UnloadShader(m_marcher);
+		UnloadRenderTexture(m_render_texture);
 	};
 
 	std::shared_ptr<Object> AddObject(std::shared_ptr<Object> object, uint64_t layerIndex = 0);
@@ -60,6 +65,7 @@ public:
 	void SetClearColor(Color clear) { m_clear_color = clear; };
 	void PopulateCache();
 	void Render();
+	void WindowResized();
 
 private:
 	void LoadLayerUniforms(uint64_t layerIndex);
