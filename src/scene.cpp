@@ -60,8 +60,44 @@ void Scene::Render() {
 	EndShaderMode();
 }
 
+// Manages the movement of the camera in the viewport
+void Scene::ViewportCameraControls() {
+	Vector3 fwd = Vector3Normalize(Vector3Subtract(m_camera.target, m_camera.position));
+	// right handed system
+	Vector3 right = Vector3Normalize(Vector3CrossProduct(fwd, m_camera.up));
+	Vector3 up = m_camera.up;
+
+	Vector2 mmove = GetMouseDelta();
+	float dt = GetFrameTime();
+
+	if (IsMouseButtonDown(MOUSE_RIGHT_BUTTON)) {
+		m_theta -= mmove.x * dt;
+		m_phi -= mmove.y * dt;
+	}
+
+	Vector3 delta = {0, 0, 0};	
+	float scroll = GetMouseWheelMove() * 5;
+
+	if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) {
+		delta = Vector3Add(Vector3Add(Vector3Scale(right, -mmove.x), Vector3Scale(up, mmove.y)), delta);
+	}
+
+	delta = Vector3Add(Vector3Scale(fwd, scroll), delta);
+	delta = Vector3Scale(delta, dt * 2); // speed factor
+	m_camera.position = Vector3Add(m_camera.position, delta);
+	m_camera.target = Vector3Add(m_camera.target, delta);
+
+	m_theta = fmod(m_theta, 2 * PI);
+	m_phi = Clamp(m_phi, -PI/2 + 0.1, PI/2 - 0.1);
+
+	// calculate new position
+	m_camera.position.x = -m_r * sin(m_theta) * cos(m_phi) + m_camera.target.x;
+	m_camera.position.y = -m_r * sin(m_phi) + m_camera.target.y;
+	m_camera.position.z = -m_r * cos(m_theta) * cos(m_phi) + m_camera.target.z;
+}
+
 void Scene::Update() {
-	UpdateCamera(&m_camera, CAMERA_FREE);
+	ViewportCameraControls();
 
 	float res[2] = {(float)GetScreenWidth(), (float)GetScreenHeight()};
 	uint64_t obj_size = m_objects.size();

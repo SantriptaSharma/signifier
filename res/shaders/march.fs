@@ -137,7 +137,7 @@ Hit hitJoin(Hit a, Hit b, int combineType) {
 }
 
 Hit sdfScene(in vec3 point) {
-	Hit minHit = Hit(MAX_DISTANCE, vec3(0.0));
+	Hit minHit = Hit(MAX_DISTANCE, clearColor);
 
 	for (int i = 0; i < objectCount; i++) {
 		Hit hit;
@@ -250,6 +250,8 @@ vec3 march(in vec3 ro, in vec3 rd) {
 			break;
 		}
 	}
+
+	return clearColor;
 }
 
 void main()
