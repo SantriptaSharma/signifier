@@ -42,8 +42,7 @@ void Scene::PopulateCache() {
 	AddToCache(m_marcher, m_uniform_cache, "viewCenter");
 	AddToCache(m_marcher, m_uniform_cache, "objectCount");
 	AddToCache(m_marcher, m_uniform_cache, "lightCount");
-	AddToCache(m_composer, m_uniform_cache, "clearColor");
-	AddToCache(m_marcher, m_uniform_cache, "depth");
+	AddToCache(m_marcher, m_uniform_cache, "clearColor");
 
 	for (int i = 0; i < MAX_OBJECTS; i++) {
 		AddToCache(m_marcher, m_uniform_cache, TextFormat("objects[%d].type", i));
@@ -72,7 +71,6 @@ void Scene::Render() {
 
 	for (uint64_t i = 0; i < layers; i++) {
 		this->LoadLayerUniforms(i);
-		SetShaderValueTexture(m_marcher, m_uniform_cache.at("depth"), m_render_texture.texture);
 
 		BeginTextureMode(m_render_texture);
 			BeginShaderMode(m_marcher);
@@ -81,12 +79,7 @@ void Scene::Render() {
 		EndTextureMode();
 	}
 
-	float clear[3] = COLOR2FLOAT3(m_clear_color);
-	SetShaderValue(m_composer, m_uniform_cache.at("clearColor"), &clear, SHADER_UNIFORM_VEC3);
-
-	BeginShaderMode(m_composer);
-		DrawTextureRec(m_render_texture.texture, {0, 0, (float)m_render_texture.texture.width, -(float)m_render_texture.texture.height}, {0, 0}, WHITE);
-	EndShaderMode();
+	DrawTextureRec(m_render_texture.texture, {0, 0, (float)m_render_texture.texture.width, -(float)m_render_texture.texture.height}, {0, 0}, WHITE);
 }
 
 void Scene::WindowResized() {
@@ -143,6 +136,9 @@ void Scene::LoadLayerUniforms(uint64_t layerIndex) {
 	SetShaderValue(m_marcher, m_uniform_cache.at("viewCenter"), Vector3ToFloatV(m_camera.target).v, SHADER_UNIFORM_VEC3);
 	SetShaderValue(m_marcher, m_uniform_cache.at("objectCount"), &obj_size, SHADER_UNIFORM_INT);
 	SetShaderValue(m_marcher, m_uniform_cache.at("lightCount"), &light_size, SHADER_UNIFORM_INT);
+
+	float clear[3] = COLOR2FLOAT3(m_clear_color);
+	SetShaderValue(m_marcher, m_uniform_cache.at("clearColor"), clear, SHADER_UNIFORM_VEC3);
 
 	for (uint64_t i = 0; i < obj_size; i++) {
 		float color[3] = COLOR2FLOAT3(l.objects[i]->color);

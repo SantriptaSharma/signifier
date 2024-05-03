@@ -45,8 +45,7 @@ uniform Object objects[MAX_OBJECTS];
 uniform int objectCount;
 uniform Light lights[MAX_LIGHTS];
 uniform int lightCount;
-
-uniform sampler2D depth;
+uniform vec3 clearColor;
 
 mat3 setCamera(in vec3 ro, in vec3 ta, float cr)
 {
@@ -255,7 +254,7 @@ vec4 march(in vec3 ro, in vec3 rd) {
 		}
 	}
 
-	return vec4(0.0, 0.0, 0.0, 1.0);
+	return vec4(clearColor, 1.0);
 }
 
 void main()
@@ -272,13 +271,12 @@ void main()
 	vec3 rd = ca * normalize( vec3(p.xy, 2) );
 
 	vec4 col = march(ro, rd);
+	float depthInfo = col.a;
 
 	// gamma correct
-	col = pow(col, vec4(0.4545, 0.4545, 0.4545, 1.0));
+	col.a = 1;
+	col = pow(col, vec4(0.4545));
 
-	vec4 pix = texelFetch(depth, ivec2(gl_FragCoord.xy), 0);
-	
-	if (pix.a < col.a) discard;
-	
+	gl_FragDepth = min(gl_FragDepth, depthInfo);
 	finalColor = col;
 }

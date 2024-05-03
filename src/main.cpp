@@ -11,9 +11,8 @@ static std::shared_ptr<Object> rotatingSphere = nullptr;
 std::unique_ptr<Scene> setupScene() {
     std::cout << GetWorkingDirectory() << std::endl;
     Shader marcher = LoadShader(0, "res/shaders/march.fs");
-    Shader composer = LoadShader(0, "res/shaders/composer.fs");
 
-    std::unique_ptr<Scene> scene = std::make_unique<Scene>(SceneConfig{}, marcher, composer);
+    std::unique_ptr<Scene> scene = std::make_unique<Scene>(SceneConfig{}, marcher);
     scene->AddObject(Object::MakeSphere(Vector3{0, 0, 0}, 1.5f, RED));
     scene->AddObject(Object::MakeSphere(Vector3{-5, 0, 3}, 1.0f, YELLOW));
     
@@ -39,21 +38,25 @@ std::unique_ptr<Scene> setupScene() {
     box->combineType = CombineType::UNION;
     scene->AddObject(box);
 
-    int layer = scene->CreateLayer("BigFloor");
-    box = Object::MakeBox(Vector3{0, -8, 0}, Vector3{30, 0.2, 30}, GREEN);
+    int layer = scene->CreateLayer("SmallFloor");
+    box = Object::MakeBox(Vector3{0, -2, 0}, Vector3{5, 0.2, 5}, GREEN);
     scene->AddObject(box, layer);
 
+    cylinder = scene->AddObject(Object::MakeCylinder(Vector3{-3, -2, 0}, 1.0f, 2.0f, ORANGE), layer);
+    cylinder = scene->AddObject(Object::MakeCylinder(Vector3{-3, -2, 0}, 0.6f, 3.0f, ORANGE), layer);
+    cylinder->combineType = CombineType::SUBTRACT;
+
     scene->AddLight(MakeDirectionalLight(Vector3{0.5, -1, -0.8}, WHITE, 0.5f));
+    scene->AddLight(MakePointLight(Vector3{-3, -2, 0}, YELLOW, 0.5f));
+
     scene->SetClearColor(SKYBLUE);
     return scene;
 }
 
 int main(int argc, const char **argv) {
-    SetConfigFlags(FLAG_WINDOW_RESIZABLE);
-    InitWindow(1000, 800, "Signify SDF Editor");
-    SetWindowMinSize(800, 600);
+    InitWindow(1000, 800, "Signify SDF Viewer");
 
-    SetTargetFPS(30);
+    SetTargetFPS(45);
 
     std::unique_ptr<Scene> s = setupScene();
 
@@ -68,9 +71,9 @@ int main(int argc, const char **argv) {
         }
 
         BeginDrawing();
-        ClearBackground(RAYWHITE);
-        s->Render();
-        DrawText(TextFormat("FPS: %.02f\nDelta: %.04f", 1/delta, delta), 10, 10, 20, DARKGRAY);
+            ClearBackground(RAYWHITE);
+            s->Render();
+            DrawText(TextFormat("FPS: %.02f\nDelta: %.04f", 1/delta, delta), 10, 10, 20, DARKGRAY);
         EndDrawing();
     }
 
