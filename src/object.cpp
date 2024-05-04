@@ -24,6 +24,23 @@ std::shared_ptr<Object> Object::MakeCylinder(Vector3 pos, float radius, float he
 	return std::make_shared<Object>(ObjectType::CYLINDER, transform, size, color);
 }
 
+BBox Object::GetBBox() {
+	Vector3 min, max;
+	
+	switch (type) {
+		case ObjectType::SPHERE:
+		case ObjectType::PLANE:
+		case ObjectType::BOX:
+		case ObjectType::CYLINDER:
+		case ObjectType::CONE:
+			min = Vector3Transform(Vector3{-size.x, -size.y, -size.z}, transform);
+			max = Vector3Transform(Vector3{size.x, size.y, size.z}, transform);
+		break;
+	}
+
+	return BBox(min, max);
+}
+
 std::shared_ptr<Light> MakePointLight(Vector3 pos, Color color, float intensity)
 {
 	return std::make_shared<Light>(Light{pos, color, LightType::POINT, intensity});

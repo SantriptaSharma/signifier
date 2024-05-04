@@ -8,7 +8,7 @@
 #define SHAD_EPS 0.1
 #define NORMAL_EPS 0.0001
 #define LIGHT_ZERO_POINT 0.01
-#define SHININESS 10
+#define SHININESS 50
 #define SPEC_COLOR (vec3(1.0))
 
 #define AA_ROUNDS 3

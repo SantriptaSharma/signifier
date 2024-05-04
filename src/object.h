@@ -4,6 +4,17 @@
 #include "raylib.h"
 #include "raymath.h"
 
+struct BBox {
+	Vector3 min, max;
+
+	BBox(Vector3 min, Vector3 max): min(min), max(max) {};
+	BBox(): min(Vector3Zero()), max(Vector3Zero()) {};
+	
+	BBox operator+(const BBox &other) {
+		return BBox(Vector3Min(min, other.min), Vector3Max(max, other.max));
+	}
+};
+
 enum class ObjectType {
 	SPHERE,
 	PLANE,
@@ -40,6 +51,8 @@ struct Object {
 	static std::shared_ptr<Object> MakeInfPlane(float y, Matrix rotation, Color color);
 	static std::shared_ptr<Object> MakeBox(Vector3 pos, Vector3 size, Color color);
 	static std::shared_ptr<Object> MakeCylinder(Vector3 pos, float radius, float height, Color color);
+
+	BBox GetBBox();
 };
 
 enum class LightType {

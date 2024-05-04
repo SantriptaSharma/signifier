@@ -98,8 +98,8 @@ void Scene::ViewportCameraControls() {
 	float dt = GetFrameTime();
 
 	if (IsMouseButtonDown(MOUSE_RIGHT_BUTTON)) {
-		m_theta -= mmove.x * dt;
-		m_phi -= mmove.y * dt;
+		m_theta -= mmove.x * dt/2;
+		m_phi -= mmove.y * dt/2;
 	}
 
 	Vector3 delta = {0, 0, 0};	

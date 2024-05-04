@@ -40,7 +40,7 @@ private:
 	RenderTexture2D m_render_texture;
 	
 public:
-	Scene(SceneConfig config, Shader marcher): m_config(config), m_camera(), m_r(5), m_theta(PI/2), m_phi(0), m_id(SCN_ID++), m_layers(1), 
+	Scene(SceneConfig config, Shader marcher): m_config(config), m_camera(), m_r(0.5f), m_theta(PI/2), m_phi(0), m_id(SCN_ID++), m_layers(1), 
 	m_marcher(marcher), m_uniform_cache() { 
 		m_camera = {0};
     	m_camera.position = Vector3{0, 0, m_r};
