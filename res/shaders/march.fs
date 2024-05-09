@@ -47,6 +47,7 @@ uniform float lightZeroPoint;
 
 uniform vec3 specColor;
 uniform float specStrength;
+uniform float blendFactor;
 
 mat3 setCamera(in vec3 ro, in vec3 ta, float cr)
 {
@@ -87,7 +88,7 @@ Hit sdfInfPlane(in Object o, in vec3 point) {
 // polynomial smooth minimum with exposed blending factor from https://iquilezles.org/articles/smin/
 vec2 smin( float a, float b, float k )
 {
-	float h = 1.0 - min( abs(a-b)/(4.0*k), 1.0 );
+	float h = 1.0 - min( abs(a-b)/(4.0*(k + NORMAL_EPS)), 1.0 );
 	float w = h*h;
 	float m = w*0.5;
 	float s = w*k;
@@ -95,7 +96,7 @@ vec2 smin( float a, float b, float k )
 }
 
 Hit hitSUnion(Hit a, Hit b) {
-	vec2 res = smin(a.dist, b.dist, 0.3);
+	vec2 res = smin(a.dist, b.dist, blendFactor);
 
 	return Hit(res.x, mix(a.color, b.color, res.y));
 }

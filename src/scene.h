@@ -21,10 +21,12 @@ struct SceneConfig {
 
 struct LayerConfig {
 	Color specColor;
+	Matrix transform;
 	float specStrength;
+	float blendFactor;
 };
 
-#define DEFAULT_LAYER_CONFIG LayerConfig{.specColor = WHITE, .specStrength = 80}
+#define DEFAULT_LAYER_CONFIG LayerConfig{.specColor = WHITE, .transform = MatrixIdentity(), .specStrength = 80, .blendFactor = 0.3}
 
 // used to separate non-interacting objects
 struct Layer {
@@ -52,7 +54,7 @@ private:
 	RenderTexture2D m_render_texture;
 	
 public:
-	Scene(SceneConfig config, Shader marcher): m_config(config), m_camera(), m_r(0.5f), m_theta(PI/2), m_phi(0), m_id(SCN_ID++), m_layers(1), 
+	Scene(SceneConfig config, Shader marcher): m_config(config), m_camera(), m_r(0.5f), m_theta(PI), m_phi(0), m_id(SCN_ID++), m_layers(1), 
 	m_marcher(marcher), m_uniform_cache() { 
 		rlEnableDepthMask();
 		rlEnableDepthTest();
@@ -65,6 +67,8 @@ public:
 		
 		m_render_texture = LoadRenderTexture(GetScreenWidth(), GetScreenHeight());
 
+		m_layers[0].config = DEFAULT_LAYER_CONFIG;
+
 		PopulateCache();
 	};
 
@@ -75,10 +79,11 @@ public:
 
 	std::shared_ptr<Object> AddObject(std::shared_ptr<Object> object, uint64_t layerIndex = 0);
 	std::shared_ptr<Light> AddLight(std::shared_ptr<Light> light);
-	uint64_t CreateLayer(string name);
+	uint64_t CreateLayer(string name, LayerConfig config);
 
 	// no bounds checking for layers
 	void SetLayerConfig(LayerConfig config, uint64_t layerIndex = 0) { m_layers[layerIndex].config = config; }
+	void SetLayerTransform(Matrix transform, uint64_t layerIndex = 0) { m_layers[layerIndex].config.transform = transform; }
 	LayerConfig GetLayerConfig(uint64_t layerIndex = 0) { return m_layers[layerIndex].config; }
 	
 	void PopulateCache();

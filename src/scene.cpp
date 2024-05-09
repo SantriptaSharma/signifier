@@ -25,11 +25,12 @@ std::shared_ptr<Light> Scene::AddLight(std::shared_ptr<Light> light) {
 	return light;
 }
 
-uint64_t Scene::CreateLayer(string name) {
+uint64_t Scene::CreateLayer(string name, LayerConfig config) {
 	Layer l;
 	l.name = name;
-	l.config = DEFAULT_LAYER_CONFIG;
+	l.config = config;
 	m_layers.push_back(l);
+
 	return m_layers.size() - 1;
 }
 
@@ -48,6 +49,7 @@ void Scene::PopulateCache() {
 
 	AddToCache(m_marcher, m_uniform_cache, "specColor");
 	AddToCache(m_marcher, m_uniform_cache, "specStrength");
+	AddToCache(m_marcher, m_uniform_cache, "blendFactor");
 
 	for (int i = 0; i < MAX_OBJECTS; i++) {
 		AddToCache(m_marcher, m_uniform_cache, TextFormat("objects[%d].type", i));
@@ -133,6 +135,7 @@ void Scene::LoadLayerUniforms(uint64_t layerIndex) {
 
 	Layer &l = m_layers[layerIndex];
 
+	Matrix layerMat = l.config.transform;
 	uint64_t obj_size = l.objects.size();
 	uint64_t light_size = m_lights.size();
 
@@ -149,15 +152,18 @@ void Scene::LoadLayerUniforms(uint64_t layerIndex) {
 	float spec[3] = COLOR2FLOAT3(l.config.specColor);
 	SetShaderValue(m_marcher, m_uniform_cache.at("specColor"), spec, SHADER_UNIFORM_VEC3);
 	SetShaderValue(m_marcher, m_uniform_cache.at("specStrength"), &l.config.specStrength, SHADER_UNIFORM_FLOAT);
+	SetShaderValue(m_marcher, m_uniform_cache.at("blendFactor"), &l.config.blendFactor, SHADER_UNIFORM_FLOAT);
 
 	for (uint64_t i = 0; i < obj_size; i++) {
 		float color[3] = COLOR2FLOAT3(l.objects[i]->color);
 		float size[3] = {l.objects[i]->size.x, l.objects[i]->size.y, l.objects[i]->size.z};
 
+
 		SetShaderValue(m_marcher, m_uniform_cache.at(TextFormat("objects[%d].type", i)), &l.objects[i]->type, SHADER_UNIFORM_INT);
 		SetShaderValue(m_marcher, m_uniform_cache.at(TextFormat("objects[%d].combineType", i)), &l.objects[i]->combineType, SHADER_UNIFORM_INT);
 		SetShaderValue(m_marcher, m_uniform_cache.at(TextFormat("objects[%d].color", i)), &color, SHADER_UNIFORM_VEC3);
-		SetShaderValueMatrix(m_marcher, m_uniform_cache.at(TextFormat("objects[%d].invTransform", i)), MatrixInvert(l.objects[i]->transform));
+		SetShaderValueMatrix(m_marcher, m_uniform_cache.at(TextFormat("objects[%d].invTransform", i)), 
+			MatrixInvert(MatrixMultiply(l.objects[i]->transform, layerMat)));
 		SetShaderValue(m_marcher, m_uniform_cache.at(TextFormat("objects[%d].size", i)), &size, SHADER_UNIFORM_VEC3);
 	}
 
