@@ -25,9 +25,10 @@ std::shared_ptr<Light> Scene::AddLight(std::shared_ptr<Light> light) {
 	return light;
 }
 
-int Scene::CreateLayer(string name) {
+uint64_t Scene::CreateLayer(string name) {
 	Layer l;
 	l.name = name;
+	l.config = DEFAULT_LAYER_CONFIG;
 	m_layers.push_back(l);
 	return m_layers.size() - 1;
 }
@@ -43,6 +44,10 @@ void Scene::PopulateCache() {
 	AddToCache(m_marcher, m_uniform_cache, "objectCount");
 	AddToCache(m_marcher, m_uniform_cache, "lightCount");
 	AddToCache(m_marcher, m_uniform_cache, "clearColor");
+	AddToCache(m_marcher, m_uniform_cache, "lightZeroPoint");
+
+	AddToCache(m_marcher, m_uniform_cache, "specColor");
+	AddToCache(m_marcher, m_uniform_cache, "specStrength");
 
 	for (int i = 0; i < MAX_OBJECTS; i++) {
 		AddToCache(m_marcher, m_uniform_cache, TextFormat("objects[%d].type", i));
@@ -66,7 +71,7 @@ void Scene::Render() {
 	uint64_t layers = m_layers.size();
 
 	BeginTextureMode(m_render_texture);
-		ClearBackground(m_clear_color);
+		ClearBackground(m_config.clear_color);
 	EndTextureMode();
 
 	for (uint64_t i = 0; i < layers; i++) {
@@ -137,8 +142,13 @@ void Scene::LoadLayerUniforms(uint64_t layerIndex) {
 	SetShaderValue(m_marcher, m_uniform_cache.at("objectCount"), &obj_size, SHADER_UNIFORM_INT);
 	SetShaderValue(m_marcher, m_uniform_cache.at("lightCount"), &light_size, SHADER_UNIFORM_INT);
 
-	float clear[3] = COLOR2FLOAT3(m_clear_color);
+	float clear[3] = COLOR2FLOAT3(m_config.clear_color);
 	SetShaderValue(m_marcher, m_uniform_cache.at("clearColor"), clear, SHADER_UNIFORM_VEC3);
+	SetShaderValue(m_marcher, m_uniform_cache.at("lightZeroPoint"), &m_config.light_zero_point, SHADER_UNIFORM_FLOAT);
+
+	float spec[3] = COLOR2FLOAT3(l.config.specColor);
+	SetShaderValue(m_marcher, m_uniform_cache.at("specColor"), spec, SHADER_UNIFORM_VEC3);
+	SetShaderValue(m_marcher, m_uniform_cache.at("specStrength"), &l.config.specStrength, SHADER_UNIFORM_FLOAT);
 
 	for (uint64_t i = 0; i < obj_size; i++) {
 		float color[3] = COLOR2FLOAT3(l.objects[i]->color);

@@ -5,6 +5,8 @@
 #include <map>
 #include <string>
 
+#include "rlgl.h"
+
 #include "object.h"
 
 #define MAX_OBJECTS 128
@@ -12,12 +14,23 @@
 
 using string = std::string;
 
-struct SceneConfig {};
+struct SceneConfig {
+	Color clear_color;
+	float light_zero_point;
+};
+
+struct LayerConfig {
+	Color specColor;
+	float specStrength;
+};
+
+#define DEFAULT_LAYER_CONFIG LayerConfig{.specColor = WHITE, .specStrength = 80}
 
 // used to separate non-interacting objects
 struct Layer {
 	string name;
 	std::vector<std::shared_ptr<Object>> objects;
+	LayerConfig config;
 };
 
 class Scene {
@@ -35,13 +48,15 @@ private:
 	std::vector<std::shared_ptr<Light>> m_lights;
 	Shader m_marcher;
 	std::map<string, int> m_uniform_cache;
-	Color m_clear_color;
 
 	RenderTexture2D m_render_texture;
 	
 public:
 	Scene(SceneConfig config, Shader marcher): m_config(config), m_camera(), m_r(0.5f), m_theta(PI/2), m_phi(0), m_id(SCN_ID++), m_layers(1), 
 	m_marcher(marcher), m_uniform_cache() { 
+		rlEnableDepthMask();
+		rlEnableDepthTest();
+
 		m_camera = {0};
     	m_camera.position = Vector3{0, 0, m_r};
     	m_camera.target = Vector3{0, 0, 0};
@@ -51,7 +66,6 @@ public:
 		m_render_texture = LoadRenderTexture(GetScreenWidth(), GetScreenHeight());
 
 		PopulateCache();
-		m_clear_color = BLACK;
 	};
 
 	~Scene() {
@@ -61,8 +75,12 @@ public:
 
 	std::shared_ptr<Object> AddObject(std::shared_ptr<Object> object, uint64_t layerIndex = 0);
 	std::shared_ptr<Light> AddLight(std::shared_ptr<Light> light);
-	int CreateLayer(string name);
-	void SetClearColor(Color clear) { m_clear_color = clear; };
+	uint64_t CreateLayer(string name);
+
+	// no bounds checking for layers
+	void SetLayerConfig(LayerConfig config, uint64_t layerIndex = 0) { m_layers[layerIndex].config = config; }
+	LayerConfig GetLayerConfig(uint64_t layerIndex = 0) { return m_layers[layerIndex].config; }
+	
 	void PopulateCache();
 	void Render();
 	void WindowResized();

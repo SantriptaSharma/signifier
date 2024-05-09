@@ -1,5 +1,4 @@
 #include "raylib.h"
-#include "rlgl.h"
 
 #include "object.h"
 #include "scene.h"
@@ -10,7 +9,7 @@ std::unique_ptr<Scene> setupScene() {
     std::cout << GetWorkingDirectory() << std::endl;
     Shader marcher = LoadShader(0, "res/shaders/march.fs");
 
-    std::unique_ptr<Scene> scene = std::make_unique<Scene>(SceneConfig{}, marcher);
+    std::unique_ptr<Scene> scene = std::make_unique<Scene>(SceneConfig{.clear_color = SKYBLUE, .light_zero_point = 0.01f}, marcher);
     scene->AddObject(Object::MakeSphere(Vector3{0, 0, 0}, 1.5f, RED));
     scene->AddObject(Object::MakeSphere(Vector3{-5, 0, 3}, 1.0f, YELLOW));
     
@@ -44,9 +43,9 @@ std::unique_ptr<Scene> setupScene() {
     cylinder = scene->AddObject(Object::MakeCylinder(Vector3{-3, -2, 0}, 0.6f, 3.0f, ORANGE), layer);
     cylinder->combineType = CombineType::SUBTRACT;
 
+    
     scene->AddLight(MakeDirectionalLight(Vector3{0.5, -1, -0.8}, WHITE, 0.5f));
 
-    scene->SetClearColor(SKYBLUE);
     return scene;
 }
 
@@ -56,9 +55,6 @@ int main(int argc, const char **argv) {
     SetTargetFPS(45);
 
     std::unique_ptr<Scene> s = setupScene();
-
-    rlEnableDepthMask();
-    rlEnableDepthTest();
 
     while(!WindowShouldClose()) {
         float delta = GetFrameTime();

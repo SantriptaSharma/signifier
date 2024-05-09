@@ -1,15 +1,12 @@
 #define MAX_OBJECTS 128
 #define MAX_LIGHTS 8
 #define MAX_DISTANCE 1000.0
-#define MAX_ITERATIONS 512 
+#define MAX_ITERATIONS 512
 #define MAX_SHAD_ITERATIONS 128
 #define MAX_SHAD_DISTANCE 100.0
 #define EPS 0.001
 #define SHAD_EPS 0.1
 #define NORMAL_EPS 0.0001
-#define LIGHT_ZERO_POINT 0.01
-#define SHININESS 50
-#define SPEC_COLOR (vec3(1.0))
 
 #define AA_ROUNDS 3
 
@@ -46,6 +43,10 @@ uniform int objectCount;
 uniform Light lights[MAX_LIGHTS];
 uniform int lightCount;
 uniform vec3 clearColor;
+uniform float lightZeroPoint;
+
+uniform vec3 specColor;
+uniform float specStrength;
 
 mat3 setCamera(in vec3 ro, in vec3 ta, float cr)
 {
@@ -206,7 +207,7 @@ float soft_shadow(in vec3 ro, in vec3 rd, float k) {
 }
 
 vec3 lighting(in vec3 point, in vec3 normal, in vec3 color, in vec3 view) {
-	vec3 lightColor = vec3(LIGHT_ZERO_POINT) * color;
+	vec3 lightColor = vec3(lightZeroPoint) * color;
 	for (int i = 0; i < lightCount; i++) {
 		vec4 dir_intensity = get_dir_intensity(point, normal, lights[i]);
 		vec3 lightDir = dir_intensity.xyz;
@@ -214,17 +215,16 @@ vec3 lighting(in vec3 point, in vec3 normal, in vec3 color, in vec3 view) {
 
 		float shad = soft_shadow(point, lightDir, 16.0);
 
-		// TODO: allow control for 0-point (ambient scene color), and specular lighting parameters
-		float diff = max(dot(normal, lightDir), LIGHT_ZERO_POINT);
+		float diff = max(dot(normal, lightDir), lightZeroPoint);
 		float specular = 0.0;
 
 		if (diff > 0.0) {
 			vec3 H = normalize(lightDir + view);
 			float spec = max(dot(H, normal), 0.0);
-			specular = pow(spec, SHININESS);
+			specular = pow(spec, specStrength);
 		}
 
-		lightColor += (lights[i].color * diff * intensity * color + SPEC_COLOR * specular * intensity * color) * shad;
+		lightColor += (lights[i].color * diff * intensity * color + specColor * specular * intensity * color) * shad;
 	}
 
 	return lightColor;
