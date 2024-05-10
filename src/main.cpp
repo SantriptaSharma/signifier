@@ -8,7 +8,7 @@
 #include <iostream>
 
 static std::unique_ptr<Scene> (*sceneArray[])() = {
-    &SpannerScene, &TestingScene, &MetaBallsScene, &WazowskiScene
+    &MetaBallsScene, &TestingScene, &SpannerScene, &WazowskiScene
 };
 
 int main(int argc, const char **argv) {
@@ -16,7 +16,7 @@ int main(int argc, const char **argv) {
 
     SetTargetFPS(45);
 
-    int scene = 3;
+    int scene = 0;
 
     std::unique_ptr<Scene> s = sceneArray[scene]();
 
@@ -25,12 +25,24 @@ int main(int argc, const char **argv) {
 
         std::shared_ptr<Object> obj1, obj2, obj3, obj4;
 
+        int one = IsKeyPressed(KEY_ONE);
+        int two = IsKeyPressed(KEY_TWO) * 2;
+        int three = IsKeyPressed(KEY_THREE) * 3;
+        int four = IsKeyPressed(KEY_FOUR) * 4;
+
+        if (one || two || three || four) {
+            int selected = (one + two + three + four) % 5;
+            scene = selected - 1;
+            std::cout <<  selected << std::endl;
+            s = sceneArray[selected - 1]();
+        }
+
         switch (scene) {
-            case 0:
+            case 2:
                 s->SetLayerTransform(MatrixRotateZYX(Vector3{0, time * 2, PI/5}));
             break;
 
-            case 2:
+            case 0:
                 obj1 = s->GetObject(0);
                 obj2 = s->GetObject(1);
 
