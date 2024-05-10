@@ -78,6 +78,7 @@ public:
 	};
 
 	std::shared_ptr<Object> AddObject(std::shared_ptr<Object> object, uint64_t layerIndex = 0);
+	std::shared_ptr<Object> GetObject(uint64_t objIndex = 0, uint64_t layerIndex = 0) { return m_layers[layerIndex].objects[objIndex]; };
 	std::shared_ptr<Light> AddLight(std::shared_ptr<Light> light);
 	uint64_t CreateLayer(string name, LayerConfig config);
 

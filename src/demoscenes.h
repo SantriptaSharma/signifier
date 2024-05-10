@@ -3,6 +3,8 @@
 #include "scene.h"
 #include "object.h"
 
+#include <iostream>
+
 std::unique_ptr<Scene> TestingScene() {
     Shader marcher = LoadShader(0, "res/shaders/march.fs");
 
@@ -84,4 +86,54 @@ std::unique_ptr<Scene> SpannerScene() {
 	scene->SetLayerConfig(lc);
 
 	return scene;
+}
+
+std::unique_ptr<Scene> MetaBallsScene() {
+	Shader marcher = LoadShader(0, "res/shaders/march.fs");
+    std::unique_ptr<Scene> scene = std::make_unique<Scene>(SceneConfig{.clear_color = SKYBLUE, .light_zero_point = 0.01f}, marcher);
+
+    scene->AddLight(MakeDirectionalLight(Vector3{0.5, -1, -0.8}, WHITE, 0.5f));
+
+	auto metaball1 = scene->AddObject(Object::MakeSphere(Vector3{2, 0, 0}, 2.5f, PINK));
+	auto metaball2 = scene->AddObject(Object::MakeSphere(Vector3{-2, 0, 0}, 2.5f, GREEN));
+
+	return scene;
+}
+
+std::unique_ptr<Scene> WazowskiScene() {
+	Shader marcher = LoadShader(0, "res/shaders/march.fs");
+    std::unique_ptr<Scene> scene = std::make_unique<Scene>(SceneConfig{.clear_color = SKYBLUE, .light_zero_point = 0.01f}, marcher);
+
+    scene->AddLight(MakeDirectionalLight(Vector3{0.5, -1, -0.8}, WHITE, 0.5f));
+
+    Color skin {60, 148, 32};
+
+	auto head1 = scene->AddObject(Object::MakeSphere(Vector3{0, 0, 0}, 1.5f, skin));
+	auto head2 = scene->AddObject(Object::MakeSphere(Vector3{0, 0.8f, 0}, 0.75f, skin));
+
+    auto horn1 = scene->AddObject(Object::MakeCylinder(Vector3{0.8f, 1.5f, 0}, 0.15f, 0.25f, GRAY));
+    horn1->Rotate(MatrixRotateZ(-PI/8));
+    auto horn2 = scene->AddObject(Object::MakeCylinder(Vector3{-0.8f, 1.5f, 0}, 0.15f, 0.25f, GRAY));
+    horn2->Rotate(MatrixRotateZ(PI/8));
+
+    horn1->combineType = CombineType::UNION;
+    horn2->combineType = CombineType::UNION;
+
+    auto eyehole = scene->AddObject(Object::MakeSphere(Vector3{0, 0.55f, 1.1f}, 0.8f, BLACK));
+    eyehole->combineType = CombineType::SUBTRACT;
+
+    auto eyemass = scene->AddObject(Object::MakeSphere(Vector3{0, 0.5f, 0.9f}, 0.7f, WHITE));
+    eyemass->combineType = CombineType::UNION;
+
+    Color irisColor {95, 211, 176};
+    auto iris = scene->AddObject(Object::MakeSphere(Vector3{0, 0.5f, 1.23f}, 0.4f, irisColor));
+    iris->combineType = CombineType::UNION;
+
+    auto pupil = scene->AddObject(Object::MakeSphere(Vector3{0, 0.5f, 1.39f}, 0.25f, BLACK));
+    pupil->combineType = CombineType::UNION;
+
+    auto mouthhole = scene->AddObject(Object::MakeSphere(Vector3{0, -0.75f, 1.75f}, 0.5f, BLACK));
+    mouthhole->combineType = CombineType::SUBTRACT;
+
+    return scene;
 }
